@@ -359,3 +359,40 @@ hs_err_pid*
 !/gradle/wrapper/gradle-wrapper.jar
 
 # End of https://www.toptal.com/developers/gitignore/api/gradle,jetbrains,intellij,visualstudiocode,androidstudio
+
+.vscode/
+
+**/.idea/
+
+venv/
+env/
+.venv/
+Scripts/
+Lib/
+
+# 컴파일된 캐시 파일
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 배포 패키지 관련
+dist/
+build/
+*.egg-info/
+
+.env
+.env.*
+
+# ==========================
+# 4. 로그 및 데이터
+# ==========================
+*.log
+logs/
+npm-debug.log*
+
+# ==========================
+# 5. IDE 및 에디터 설정
+# ==========================
+.vscode/
+.idea/
+.DS_Store

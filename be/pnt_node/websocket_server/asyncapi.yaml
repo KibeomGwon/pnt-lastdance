@@ -1,0 +1,286 @@
+asyncapi: '2.6.0'
+info:
+  title: PNT WebSocket Server
+  version: 1.0.0
+  description: WebSocket server for PNT game and chat functionality.
+
+servers:
+  dev:
+    url: http://localhost:8090
+    protocol: socket.io
+    description: Development server
+
+channels:
+  /chat:
+    description: Chat namespace
+    publish:
+      summary: Events sent by the client to the server in the chat namespace
+      message:
+        oneOf:
+          - $ref: '#/components/messages/PostJoinRoom'
+          - $ref: '#/components/messages/PostMessage'
+          - $ref: '#/components/messages/PostPrevChat'
+          - $ref: '#/components/messages/PostSyncChat'
+          - $ref: '#/components/messages/PostDisconnect'
+    subscribe:
+      summary: Events sent by the server to the client in the chat namespace
+      message:
+        oneOf:
+          - $ref: '#/components/messages/GetJoinRoom'
+          - $ref: '#/components/messages/GetMessage'
+          - $ref: '#/components/messages/GetPrevChat'
+          - $ref: '#/components/messages/GetSyncChat'
+          - $ref: '#/components/messages/Reconnect'
+
+  /game:
+    description: Game namespace
+    publish:
+      summary: Events sent by the client to the server in the game namespace
+      message:
+        oneOf:
+          - $ref: '#/components/messages/GamePostJoinRoom'
+          - $ref: '#/components/messages/PostGps'
+          - $ref: '#/components/messages/PostArrest'
+          - $ref: '#/components/messages/PostSkillUse'
+          - $ref: '#/components/messages/PostMissionImage'
+          - $ref: '#/components/messages/GamePostDisconnect'
+    subscribe:
+      summary: Events sent by the server to the client in the game namespace
+      message:
+        oneOf:
+          - $ref: '#/components/messages/GameGetJoinRoom'
+          - $ref: '#/components/messages/Alarm'
+          - $ref: '#/components/messages/GetEscape'
+          - $ref: '#/components/messages/ModifyMemberStatus'
+          - $ref: '#/components/messages/GetArrest'
+          - $ref: '#/components/messages/GetSkillUse'
+          - $ref: '#/components/messages/GameReconnect'
+
+components:
+  messages:
+    # Chat Messages
+    PostJoinRoom:
+      name: post join room
+      payload:
+        type: object
+        properties:
+          chatRoomId:
+            type: integer
+    PostMessage:
+      name: post message
+      payload:
+        type: object
+        required: [content]
+        properties:
+          content:
+            type: string
+          type:
+            type: string
+    PostPrevChat:
+      name: post prev chat
+      payload:
+        type: object
+        properties:
+          cursor:
+            type: integer
+          limit:
+            type: integer
+    PostSyncChat:
+      name: post sync chat
+      payload:
+        type: object
+        properties:
+          cursor:
+            type: integer
+    PostDisconnect:
+      name: post disconnect
+      payload:
+        type: object  
+    GetJoinRoom:
+      name: get join room
+      payload:
+        type: object
+        properties:
+          message:
+            type: string
+          chatRoomId:
+            type: integer
+    GetMessage:
+      name: get message
+      payload:
+        type: object
+        properties:
+          chatRoomId:
+            type: integer
+          memberId:
+            type: integer
+          content:
+            type: string
+          createdAt:
+            type: string
+            format: date-time
+    GetPrevChat:
+      name: get prev chat
+      payload:
+        type: array
+        items:
+          type: object
+    GetSyncChat:
+      name: get sync chat
+      payload:
+        type: array
+        items:
+          type: object
+    Reconnect:
+      name: reconnect
+      payload:
+        type: object
+        properties:
+          chatRoomId:
+            type: integer
+    # Game Messages
+    GamePostJoinRoom:
+      name: post join room
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: integer
+    PostGps:
+      name: post gps
+      payload:
+        type: object
+        required: [lat, lng]
+        properties:
+          lat:
+            type: number
+          lng:
+            type: number
+          position:
+            type: string
+          status:
+            type: string
+    PostArrest:
+      name: post arrest
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: integer
+          policeId:
+            type: integer
+          thiefId:
+            type: integer
+          lat:
+            type: number
+          lng:
+            type: number
+          clientArrestId:
+            type: string
+    PostSkillUse:
+      name: post skill use
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: integer
+          policeId:
+            type: integer
+    PostMissionImage:
+      name: post mission image
+      payload:
+        type: object
+    GamePostDisconnect:
+      name: post disconnect
+      payload:
+        type: object
+
+    GameGetJoinRoom:
+      name: get join room
+      payload:
+        type: object
+        properties:
+          message:
+            type: string
+          gameId:
+            type: integer
+          memberId:
+            type: integer
+    Alarm:
+      name: alarm
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: integer
+          message:
+            type: string
+          type:
+            type: string
+          createdAt:
+            type: integer
+    GetEscape:
+      name: get escape
+      payload:
+        type: object
+        properties:
+            gameId:
+              type: integer
+            thiefId:
+              type: integer
+            escapePointId:
+              type: integer
+            escapedAt:
+              type: string
+              format: date-time
+    ModifyMemberStatus:
+      name: modify member status
+      payload:
+        type: object
+        properties:
+            gameId:
+              type: integer
+            thiefId:
+              type: integer
+            status:
+              type: string
+            arrestedAt:
+              type: string
+              format: date-time
+    GetArrest:
+      name: get arrest
+      payload:
+        type: object
+        properties:
+            gameId:
+              type: integer
+            policeId:
+              type: integer
+            thiefId:
+              type: integer
+            result:
+              type: string
+            reason:
+              type: string
+            arrestedAt:
+              type: string
+              format: date-time
+    GetSkillUse:
+      name: get skill use
+      payload:
+        type: object
+        properties:
+            gameId:
+              type: integer
+            policeId:
+              type: integer
+            startedAt:
+              type: string
+              format: date-time
+    GameReconnect:
+      name: reconnect
+      payload:
+        type: object
+        properties:
+          gameId:
+            type: integer

@@ -1,0 +1,64 @@
+
+openapi: 3.0.0
+paths:
+  /mission/complete:
+    post:
+      summary: Complete a game mission
+      tags:
+        - Mission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: integer
+                missionId:
+                  type: integer
+                memberId:
+                  type: integer
+                success:
+                  type: boolean
+      responses:
+        '200':
+          description: Mission update processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: GameMission not found
+        '500':
+          description: Internal server error
+
+  /mission/token:
+    post:
+      summary: Generate a game token (JWT)
+      tags:
+        - Mission
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: integer
+      responses:
+        '200':
+          description: Token generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '500':
+          description: Internal server error
