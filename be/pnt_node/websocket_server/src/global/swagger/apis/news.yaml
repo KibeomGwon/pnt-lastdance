@@ -1,0 +1,33 @@
+
+openapi: 3.0.0
+paths:
+  /news/complete:
+    post:
+      summary: Send a news event
+      tags:
+        - News
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameId:
+                  type: integer
+                newsId:
+                  type: integer
+                success:
+                  type: boolean
+      responses:
+        '200':
+          description: News event sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Internal server error

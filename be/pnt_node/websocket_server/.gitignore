@@ -1,0 +1,7 @@
+node_modules/
+front/
+.env
+docs/
+test_client/
+logs/
+.DS_Store

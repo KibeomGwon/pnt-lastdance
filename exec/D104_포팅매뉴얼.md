@@ -1,0 +1,930 @@
+# S14P11D104 프로젝트 개발 및 배포 매뉴얼
+
+## 목차
+1. [개발환경](#1-개발환경)
+    *   [1.1. Frontend (Android / Kotlin)](#11-frontend-android--kotlin)
+    *   [1.2. Backend (Java / Spring Boot)](#12-backend-java--spring-boot)
+    *   [1.3. Backend (Node.js)](#13-backend-nodejs)
+    *   [1.4. AI Server (Python)](#14-ai-server-python)
+    *   [1.5. Database & Infrastructure](#15-database--infrastructure)
+    *   [1.6. IDE & Tools](#16-ide--tools)
+2. [환경변수](#2-환경변수)
+    *   [2.1. Frontend (local.properties)](#21-frontend-localproperties)
+    *   [2.2. Backend (.env, application.yml)](#22-backend-env-applicationyml)
+3. [EC2 세팅](#3-ec2-세팅)
+    *   [3.1. Docker Engine 설치](#31-docker-engine-설치)
+    *   [3.2. SSL 인증서 발급](#32-ssl-인증서-발급)
+    *   [3.3. EC2 포트 정리](#33-ec2-포트-정리)
+    *   [3.4. 방화벽(UFW) 설정](#34-방화벽ufw-설정)
+4. [빌드 및 배포](#4-빌드-및-배포)
+    *   [4.1. Nginx Reverse Proxy](#41-nginx-reverse-proxy)
+    *   [4.2. Frontend (Android)](#42-frontend-android)
+    *   [4.3. Backend (Spring Boot)](#43-backend-spring-boot)
+    *   [4.4. Backend (Node.js)](#44-backend-nodejs)
+    *   [4.5. AI Server (Python)](#45-ai-server-python)
+        *   [4.5.1. 사전 준비](#451-사전-준비-nvidia-driver--ollama)
+        *   [4.5.2. Python 환경 설정](#452-python-환경-설정-virtual-environment)
+        *   [4.5.3. 네트워크 및 환경 변수 설정](#453-네트워크-및-환경-변수-설정)
+        *   [4.5.4. 서버 실행](#454-서버-실행-background-execution)
+    *   [4.6. DB (EC2 Local)](#46-db)
+        *   [4.6.1. Docker Network 생성](#461-docker-network-생성)
+        *   [4.6.2. PostgreSQL (PostGIS)](#462-postgresql-postgis)
+        *   [4.6.3. MongoDB](#463-mongodb)
+        *   [4.6.4. Redis](#464-redis)
+        *   [4.6.5. RabbitMQ](#465-rabbitmq)
+    *   [4.7. docker-compose.yml](#47-docker-composeyml)
+5. [외부서비스](#5-외부서비스)
+    *   [5.1. 소셜 로그인 - Kakao](#51-소셜-로그인---kakao)
+        *   [5.1.1. 애플리케이션 생성](#511-애플리케이션-생성)
+        *   [5.1.2. 플랫폼 등록](#512-플랫폼-등록)
+        *   [5.1.3. 키 생성, 로그인 활성화 및 동의 항목 선택](#513-키-생성-로그인-활성화-및-동의-항목-선택)
+        *   [5.1.4. application.yml 작성](#514-applicationyml-작성)
+        *   [5.1.5. 카카오로부터 사용자 정보 받아오기](#515-카카오로부터-사용자-정보-받아오기)
+    *   [5.2. AWS S3](#52-aws-s3)
+        *   [5.2.1. 버킷 생성 및 IAM 설정](#521-버킷-생성-및-iam-설정)
+        *   [5.2.2. application.yml 작성](#522-applicationyml-작성)
+    *   [5.3. LiveKit Cloud](#53-livekit-cloud)
+        *   [5.3.1. 프로젝트 생성](#531-프로젝트-생성)
+        *   [5.3.2. 키 생성 및 WebSocket URL 확인](#532-키-생성-및-websocket-url-확인)
+        *   [5.3.3. application.yml 작성](#533-applicationyml-작성)
+        *   [5.3.4. Token 발급 로직](#534-token-발급-로직)
+
+---
+
+## 1. 개발환경
+### 1.1. Frontend (Android / Kotlin)
+*   **Platform**: Android
+*   **Language**: Kotlin (JVM Target 11)
+*   **SDK Versions**:
+    *   `compileSdk`: 36
+    *   `targetSdk`: 36
+    *   `minSdk`: 24
+*   **Framework**: Jetpack Compose (via AndroidX Compose BOM)
+*   **Key Dependencies**:
+    *   `retrofit`: 2.9.0 (HTTP Client)
+    *   `okhttp`: 4.12.0
+    *   `room`: 2.6.1 (Local Database)
+    *   `play-services-maps`: 18.2.0 (Google Maps)
+    *   `play-services-location`: 21.1.0
+    *   `maps-compose`: 4.3.3
+    *   `camera-camera2`: 1.3.1 (CameraX)
+    *   `mlkit:barcode-scanning`: 17.2.0 (QR Code)
+    *   `livekit-android`: 2.9.0
+    *   `firebase-messaging-ktx`: (Firebase Cloud Messaging)
+    *   `coil-compose`: 2.5.0 (Image Loading)
+    *   `timber`: 5.0.1 (Logging)
+
+### 1.2. Backend (Java / Spring Boot)
+*   **Java**: OpenJDK 17
+*   **Framework**: Spring Boot 3.3.6
+*   **Build Tool**: Gradle (Wrapper 사용)
+*   **Key Dependencies**:
+    *   `spring-boot-starter-data-jpa`: 3.3.6 (Hibernate Core 6.5.x)
+    *   `spring-boot-starter-security`: 3.3.6 (Spring Security 6.3.x)
+    *   `spring-boot-starter-data-redis`: 3.3.6
+    *   `spring-boot-starter-data-mongodb`: 3.3.6
+    *   `spring-boot-starter-amqp` (RabbitMQ): 3.3.6
+    *   `jjwt-api`: 0.11.5 (JWT)
+    *   `software.amazon.awssdk:s3`: 2.21.1 (AWS S3)
+    *   `io.livekit:livekit-server`: 0.8.0
+    *   `hibernate-spatial`: 6.5.x (PostGIS 지원)
+    *   `springdoc-openapi-starter-webmvc-ui`: 2.6.0 (Swagger)
+
+### 1.3. Backend (Node.js)
+*   **Runtime**: Node.js 24.12.0 (Alpine Linux 기반 Docker)
+*   **Services**:
+    *   `websocket_server`
+    *   `gps_consumer_server`
+    *   `gps_worker`
+*   **Key Dependencies**:
+    *   `express`: 5.2.1
+    *   `socket.io`: 4.8.3
+    *   `mongoose`: 9.1.5 (MongoDB ODM)
+    *   `sequelize`: 6.37.7 (PostgreSQL ORM)
+    *   `ioredis`: 5.9.2
+    *   `redis`: 5.10.0
+    *   `redis-streams-nodejs`: 1.1.5
+    *   `@socket.io/redis-adapter`: 8.3.0
+    *   `@socket.io/redis-emitter`: 5.1.0
+    *   `winston`: 3.19.0 (Logging)
+    *   `pm2`: 6.0.14 (Process Manager)
+    *   `@turf/turf`: 7.3.2 (Geospatial Analysis)
+
+### 1.4. AI Server (Python)
+*   **Framework**: FastAPI 0.109.0
+*   **Runtime**: Python 3.10+ (Inferred)
+*   **Key Dependencies**:
+    *   **Machine Learning / Vision**:
+        *   `torch`: 2.5.1+cu121 (PyTorch with CUDA 12.1)
+        *   `torchvision`: 0.20.1+cu121
+        *   `ultralytics`: 8.4.9 (YOLOv8)
+        *   `opencv-python`: 4.13.0.90
+        *   `pillow`: 12.0.0
+    *   **LLM / LangChain**:
+        *   `langchain-core`: 1.2.7
+        *   `langgraph`: 1.0.7
+        *   `openai`: 2.16.0
+    *   **Backend / Server**:
+        *   `uvicorn`: 0.27.0
+        *   `websockets`: 16.0
+        *   `pydantic`: 2.12.5
+        *   `requests`: 2.32.5
+
+### 1.5. Database & Infrastructure
+*   **OS**: Ubuntu 24.04.3 LTS (Noble)
+*   **Docker**: 29.1.5 
+*   **Docker Compose**: 1.29.2 
+*   **Web Server**: Nginx `stable-alpine`
+*   **Databases**:
+    *   **PostgreSQL**: `postgis/postgis:15-3.3` (PostgreSQL 15 + PostGIS 3.3)
+    *   **MongoDB**: `mongo:6.0`
+    *   **Redis**: `redis:7-alpine`
+    *   **RabbitMQ**: `rabbitmq:3-management-alpine`
+
+### 1.6. IDE & Tools
+*   **IDE**: IntelliJ IDEA, VS Code, Android Studio
+*   **SCM**: GitLab
+*   **Issue Tracker**: Jira
+*   **Design**: Figma
+
+## 2. 환경변수
+### 2.1. Frontend (`local.properties`)
+*   `MAPS_API_KEY`
+*   `KAKAO_NATIVE_APP_KEY`
+*   `LIVEKIT_URL`
+
+### 2.2. Backend (`.env`, `application.yml`)
+*   `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB_NAME`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+*   `MONGO_HOST`, `MONGO_PORT`, `MONGO_DB_NAME`, `MONGO_USER`, `MONGO_PASSWORD`
+*   `REDIS_HOST`, `REDIS_PORT`
+*   `MQ_HOST`, `MQ_PORT`, `MQ_USER`, `MQ_PASSWORD`, `MQ_MISSION`, `MQ_ALARM`, `MQ_NEWS`, `EXCHANGE_NAME`
+*   `JWT_SECRET`
+*   `KAKAO_APP_ID`
+*   `AWS_S3_BUCKET_NAME_SECRET`, `AWS_ACCESS_KEY_SECRET`, `AWS_SECRET_KEY_SECRET`, `AWS_REGION_SECRET`
+*   `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`
+*   `SPRING_BOOT_URL`
+
+## 3. EC2 세팅
+### 3.1. Docker Engine 설치
+**1. 필수 패키지 설치 및 GPG Key 등록**
+```bash
+# 구 버전 삭제
+sudo apt-get remove docker docker-engine docker.io containerd runc
+
+# 패키지 업데이트 및 필수 패키지 설치
+sudo apt-get update
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+
+# Docker 공식 GPG Key 추가
+sudo mkdir -m 0755 -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+# Repository 설정 (Ubuntu 24.04 / noble)
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
+
+**2. Docker Engine 설치**
+```bash
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 설치 확인
+sudo docker version
+sudo docker compose version
+```
+
+**3. Docker 권한 설정 (sudo 없이 실행)**
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### 3.2. SSL 인증서 발급
+**Nginx는 `docker-compose.yml`을 통해 컨테이너로 실행합니다.** (Host 직접 설치 X)
+
+**1. SSL 인증서 발급 (Certbot 이용)**
+```bash
+# Certbot 설치
+sudo snap install core; sudo snap refresh core
+sudo snap install --classic certbot
+sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+# 인증서 발급 (Nginx 중지 상태에서 실행 권장 또는 webroot 방식 사용)
+# -d 뒤에 도메인 주소 입력
+sudo certbot certonly --standalone -d your-domain.com
+```
+
+**2. 인증서 경로 확인**
+*   발급된 인증서는 `/etc/letsencrypt/live/your-domain.com/` 위치에 저장됩니다.
+*   이 경로를 `docker-compose.yml`의 Nginx 볼륨으로 마운트하여 사용합니다.
+
+### 3.3. EC2 포트 정리
+*   **Inbound**:
+    *   80 (HTTP)
+    *   443 (HTTPS)
+    *   22 (SSH)
+    *   **8930 (RabbitMQ)** - 외부 연동 필요 시
+*   **Internal (Docker Network)**:
+    *   8080 (Spring Boot)
+    *   8090-8091 (Socket Server)
+    *   8095 (Consumer Server)
+    *   8930 (RabbitMQ)
+
+### 3.4. 방화벽(UFW) 설정
+```bash
+# 기본 정책 설정
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+
+# SSH, HTTP, HTTPS, RabbitMQ 허용
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw allow 8930/tcp
+
+# UFW 활성화
+sudo ufw enable
+sudo ufw status
+```
+
+## 4. 빌드 및 배포
+
+### 4.1. Nginx Reverse Proxy
+```bash
+# 1. Nginx 설정 파일 및 인증서 디렉토리 확인
+# /home/ubuntu/nginx/conf.d  (설정 파일 위치)
+# /etc/letsencrypt           (SSL 인증서 위치)
+
+# 2. Docker 컨테이너 실행
+docker run -d \
+  --name nginx-proxy \
+  -p 80:80 \
+  -p 443:443 \
+  -v ./nginx/conf.d:/etc/nginx/conf.d \
+  -v /etc/letsencrypt:/etc/letsencrypt \
+  --network backend-network \
+  --restart always \
+  nginx:stable-alpine
+
+# 3. 설정 재로딩 (필요 시)
+docker exec nginx-proxy nginx -s reload
+```
+
+### 4.2. Frontend (Android)
+```bash
+# 1. 프로젝트 클론
+git clone https://lab.ssafy.com/s14-webmobile4-sub1/S14P11D104.git
+cd S14P11D104/fe/D104
+
+# 2. local.properties 생성 (SDK 경로 및 API 키 설정)
+echo "sdk.dir=/Users/username/Library/Android/sdk" > local.properties
+echo "MAPS_API_KEY=YOUR_KEY" >> local.properties
+echo "KAKAO_NATIVE_APP_KEY=YOUR_KEY" >> local.properties
+echo "LIVEKIT_URL=wss://your-livekit-url" >> local.properties
+
+# 3. APK 빌드
+./gradlew assembleRelease
+
+# 4. 생성된 APK 확인
+# app/build/outputs/apk/release/app-release.apk
+```
+
+### 4.3. Backend (Spring Boot)
+```bash
+# 1. 프로젝트 이동
+cd S14P11D104/be/pnt_spring
+
+# 2. Dockerfile 생성
+vi Dockerfile
+##########
+FROM gradle:8.14-jdk17 AS builder
+WORKDIR /app
+COPY build.gradle settings.gradle gradlew ./
+COPY gradle gradle
+RUN gradle dependencies || true
+COPY src src
+RUN gradle clean bootJar -x test
+
+FROM eclipse-temurin:17-jre
+WORKDIR /app
+COPY --from=builder /app/build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
+##########
+
+# 3. Docker 이미지 빌드
+docker build -t spring-backend .
+
+# 4. 컨테이너 실행
+docker run -d -p 8080:8080 \
+  --name spring-backend \
+  --env-file ../../.env \
+  spring-backend
+```
+
+### 4.4. Backend (Node.js)
+```bash
+# [Websocket Server]
+cd S14P11D104/be/pnt_node/websocket_server
+
+# 1. Dockerfile 생성
+vi Dockerfile
+##########
+FROM node:24.12.0-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install -g pm2 && npm install
+COPY . .
+EXPOSE 8090 8091
+CMD ["pm2-runtime", "start", "ecosystem.config.js"]
+##########
+
+# 2. 빌드 및 실행
+docker build -t websocket-server .
+docker run -d -p 8090:8090 -p 8091:8091 \
+  --name websocket-server \
+  --env-file ../../../.env \
+  websocket-server
+
+# [Consumer Server]
+cd S14P11D104/be/pnt_node/consumer_server
+# (Dockerfile 내용은 위와 유사, 포트 8095)
+docker build -t consumer-server .
+docker run -d -p 8095:8095 \
+  --name consumer-server \
+  --env-file ../../../.env \
+  consumer-server
+
+# [GPS Worker / GPS Consumer]
+# (경로 이동 후 동일한 방식으로 빌드 및 실행)
+```
+
+### 4.5. AI Server (Python & Ollama)
+**AI 서버는 고성능 GPU 연산 및 LLM(EXAONE 3.5) 구동을 위해 Host OS(Ubuntu) 환경에서 실행합니다.**
+
+#### 4.5.1. 사전 준비 (NVIDIA Driver & Ollama)
+**1. GPU 인식 및 CUDA 확인**
+```bash
+# GPU 드라이버 설치 확인 및 CUDA 버전 체크
+nvidia-smi
+
+# (참고) Torch와 호환되는지 확인 (CUDA 12.1 권장)
+nvcc --version
+```
+**2. Ollama 설치 및 모델 준비 LGAI Research의 EXAONE 3.5 모델을 로컬에서 구동하기 위해 Ollama를 설치합니다.**
+
+```bash
+# 1. Ollama 설치 (Linux 자동 설치 스크립트)
+curl -fsSL [https://ollama.com/install.sh](https://ollama.com/install.sh) | sh
+
+# 2. Ollama 서비스 동작 확인
+sudo systemctl status ollama
+
+# 3. EXAONE 3.5 모델 다운로드 (Pull)
+ollama pull exaone3.5
+
+# 4. (선택) 모델 구동 테스트
+# 프롬프트 입력 후 응답이 오는지 확인 ('/bye'로 종료)
+ollama run exaone3.5 "안녕하세요"
+```
+
+#### 4.5.2. Python 환경 설정 (Virtual Environment)
+**1. 프로젝트 경로 이동**
+```bash
+cd S14P11D104/ai
+```
+
+**2. 가상환경 생성 및 활성화**
+```bash
+# 가상환경 생성 (최초 1회 실행)
+python3 -m venv venv
+
+# 가상환경 활성화 (터미널 접속 시마다 실행 필요)
+source venv/bin/activate
+
+# (확인) 프롬프트 앞에 (venv)가 표시되어야 함
+```
+
+**3. 필수 패키지 설치**
+```bash
+# pip 업그레이드
+pip install --upgrade pip
+
+# 의존성 패키지 설치 (FastAPI, PyTorch, LangChain, Pika 등)
+pip install -r requirements.txt
+```
+
+#### 4.5.3. 네트워크 및 환경 변수 설정
+AI 서버는 외부 GPU 서버에 위치하므로, SSAFY 서버(Spring/RabbitMQ) 와 통신하기 위해 ngrok 주소를 설정해야 합니다.
+
+**1. 코드 내 설정 확인 (worker.py)**
+```bash
+# worker.py 예시
+RABBITMQ_HOST = '0.tcp.jp.ngrok.io'  # ngrok 주소 (tcp:// 제외)
+RABBITMQ_PORT = 15243                # ngrok 포트 (8930 아님)
+SPRING_API_URL = "[http://i14d104.p.ssafy.io/api/games/news/result](http://i14d104.p.ssafy.io/api/games/news/result)"
+```
+
+#### 4.5.4. 서버 실행 (Background Execution)
+
+로그 관리와 자동 재시작을 위해 pm2를 사용하여 프로세스를 구동합니다.
+
+**1. PM2 설치 (없는 경우)**
+```bash
+# Node.js 및 NPM 설치 (Ubuntu 기준)
+sudo apt update
+sudo apt install -y nodejs npm
+
+# PM2 전역 설치
+sudo npm install -g pm2
+```
+
+**2. 프로세스 시작 (API & Worker) 가상환경(venv)의 Python 인터프리터를 지정하여 실행합니다.**
+```bash
+# 로그를 worker.log에 남기며 백그라운드 실행
+nohup python worker.py > worker.log 2>&1 &
+
+# 실행 로그 실시간 확인 (RabbitMQ 연결 성공 메시지 확인 필수)
+tail -f worker.log
+```
+
+**3. 관리 및 모니터링**
+```bash
+# 실행 중인 프로세스 목록 확인
+pm2 list
+
+# 실시간 로그 확인
+pm2 monit
+# 또는 특정 프로세스 로그 확인
+pm2 logs ai-worker
+
+# 프로세스 재시작 (코드 수정 후)
+pm2 restart all
+
+# 서버 재부팅 시 자동 실행 등록
+pm2 save
+pm2 startup
+```
+
+
+### 4.6. DB
+**모든 DB는 Docker 컨테이너로 실행하며, `backend-network`를 통해 서로 통신합니다.**
+
+#### 4.6.1. Docker Network 생성
+```bash
+docker network create backend-network
+```
+
+#### 4.6.2. PostgreSQL (PostGIS)
+```bash
+# 1. 실행 (기본 포트 5432 -> 호스트 8900 매핑)
+docker run -d \
+  --name postgres-db \
+  -p 8900:5432 \
+  -e POSTGRES_USER=${POSTGRES_USER} \
+  -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} \
+  -e POSTGRES_DB=${POSTGRES_DB} \
+  -e TZ=Asia/Seoul \
+  -v postgres_data:/var/lib/postgresql/data \
+  --network backend-network \
+  --restart always \
+  postgis/postgis:15-3.3
+
+# 2. 실행 확인
+docker logs postgres-db
+```
+
+#### 4.6.3. MongoDB
+```bash
+# 1. 실행 (기본 포트 27017 -> 호스트 8910 매핑)
+docker run -d \
+  --name mongodb \
+  -p 8910:27017 \
+  -e MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME} \
+  -e MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD} \
+  -e TZ=Asia/Seoul \
+  -v mongo_data:/data/db \
+  --network backend-network \
+  --restart always \
+  mongo:6.0
+
+# 2. 실행 확인
+docker logs mongodb
+```
+
+#### 4.6.4. Redis
+```bash
+# 1. 실행 (기본 포트 6379 -> 호스트 8920 매핑)
+docker run -d \
+  --name redis-cache \
+  -p 8920:6379 \
+  -e TZ=Asia/Seoul \
+  --network backend-network \
+  --restart always \
+  redis:7-alpine
+
+# 2. 실행 확인
+docker exec -it redis-cache redis-cli ping
+# PONG 응답 시 정상
+```
+
+#### 4.6.5. RabbitMQ
+```bash
+# 1. 실행 (5672->8930, 15672->8931 매핑)
+docker run -d \
+  --name rabbitmq \
+  -p 8930:5672 \
+  -p 8931:15672 \
+  -e RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER} \
+  -e RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS} \
+  -e TZ=Asia/Seoul \
+  --network backend-network \
+  --restart always \
+  rabbitmq:3-management-alpine
+
+# 2. Management UI 접속 확인
+# http://[EC2_IP]:8931
+```
+
+### 4.7. docker-compose.yml
+도커 이미지 빌드 및 실행을 자동화하는 파일 (db 까지 포함)
+
+```yaml
+services:
+  # 1. Nginx
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+    depends_on:
+      - spring-app
+      - websocket-server
+      - consumer-server
+    networks:
+      - backend-network
+
+  # 2. PostgreSQL + PostGIS
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      TZ: Asia/Seoul
+    ports:
+      - "8900:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-network
+
+  # 3. MongoDB
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      TZ: Asia/Seoul
+    ports:
+      - "8910:27017"
+    volumes:
+      - mongo_data:/data/db
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    networks:
+      - backend-network
+    healthcheck:
+      test: [ "CMD-SHELL", "mongosh -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval \"db.adminCommand('ping')\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # 4. Redis
+  redis:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "8920:6379"
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend-network
+
+  # 5. RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "8930:5672"
+      - "8931:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${MQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${MQ_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "check_running" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-network
+
+  # 6. Spring Boot Application
+  spring-app:
+    build:
+      context: ./be/pnt_spring
+      dockerfile: Dockerfile
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  # 7. WebSocket Server
+  websocket-server:
+    build:
+      context: ./be/pnt_node/websocket_server
+      dockerfile: Dockerfile
+    container_name: websocket-server
+    ports:
+      - "8090-8091:8090-8091"
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Seoul
+      - SPRING_BOOT_URL=http://spring-app:8080/spring
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - ./logs:/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  # 8. Consumer Server
+  consumer-server:
+    build:
+      context: ./be/pnt_node/consumer_server
+      dockerfile: Dockerfile
+    container_name: consumer-server
+    ports:
+      - "8095:8095"
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+      websocket-server:
+        condition: service_started
+    networks:
+      - backend-network
+
+  # 9. GPS Worker
+  gps-worker:
+    build:
+      context: ./be/pnt_node/gps_worker
+      dockerfile: Dockerfile
+    container_name: gps-worker
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      websocket-server:
+        condition: service_started
+    networks:
+      - backend-network
+
+  # 10. GPS Consumer Server
+  gps-consumer-server:
+    build:
+      context: ./be/pnt_node/gps_consumer_server
+      dockerfile: Dockerfile
+    container_name: gps-consumer-server
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+      websocket-server:
+        condition: service_started
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
+```
+
+**[Docker Compose 실행 명령어]**
+```bash
+# 1. 빌드 및 백그라운드 실행
+docker-compose up -d --build
+
+# 2. 컨테이너 상태 확인
+docker-compose ps
+
+# 3. 로그 확인
+docker-compose logs -f
+```
+
+## 5. 외부서비스
+### 5.1. 소셜 로그인 - Kakao
+**Android Native App Key를 이용한 SDK 로그인 방식과 REST API를 활용한 사용자 정보 조회를 혼합하여 사용합니다**
+
+#### 5.1.1. 애플리케이션 생성
+* **Kakao Developers 접속**: [https://developers.kakao.com/](https://developers.kakao.com/) 로그인 후 `내 애플리케이션 > 애플리케이션 추가하기`를 클릭합니다.
+* **앱 정보 입력**: 앱 이름(예: `PoliceAndThief`), 사업자명(예: `S14P11D104`)을 입력하고 저장합니다.
+
+#### 5.1.2. 플랫폼 등록
+* **Android 플랫폼 등록**:
+    * `앱 설정 > 플랫폼 > Android 등록` 메뉴로 이동합니다.
+    * **패키지명**: `com.d104.pnt` (프로젝트 `build.gradle`의 `applicationId`와 반드시 일치해야 함)
+    * **마켓 URL**: 배포 전이라면 임의의 URL을 입력하거나 비워둡니다.
+    * **키 해시(Key Hash) 등록**:
+        * **Debug용**: 개발 PC 터미널에서 생성한 해시 값 (Keytool 이용)
+        * **Release용**: CI/CD 파이프라인 또는 배포용 Keystore의 해시 값 (**필수 등록**)
+* **Web 플랫폼 등록 (Optional)**:
+    * REST API 테스트 및 리다이렉트 URI 설정을 위해 `http://localhost:8080` 등을 등록합니다.
+
+#### 5.1.3. 키 생성, 로그인 활성화 및 동의 항목 선택
+* **앱 키 확인**:
+    * `앱 설정 > 요약 정보`에서 **Native App Key** (Android 클라이언트용)와 **REST API Key** (백엔드 서버용)를 확인합니다.
+* **카카오 로그인 활성화**:
+    * `제품 설정 > 카카오 로그인`에서 상태를 `OFF` → `ON`으로 변경합니다.
+    * **Redirect URI**: Spring Security 사용 시 `http://{SERVER_DOMAIN}/login/oauth2/code/kakao` 형태로 등록합니다.
+* **동의 항목 설정**:
+    * `제품 설정 > 카카오 로그인 > 동의항목`으로 이동합니다.
+    * **닉네임 (profile_nickname)**: `필수 동의`로 설정합니다.
+    * **프로필 사진 (profile_image)**: `선택 동의`로 설정합니다 (게임 내 프로필 표시에 사용됨).
+
+#### 5.1.4. application.yml 작성
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${KAKAO_APP_ID}          # REST API Key
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - profile_nickname
+              - profile_image
+            client-name: Kakao
+        provider:
+          kakao:
+            authorization-uri: [https://kauth.kakao.com/oauth/authorize](https://kauth.kakao.com/oauth/authorize)
+            token-uri: [https://kauth.kakao.com/oauth/token](https://kauth.kakao.com/oauth/token)
+            user-info-uri: [https://kapi.kakao.com/v2/user/me](https://kapi.kakao.com/v2/user/me)
+            user-name-attribute: id
+```
+#### 5.1.5. 카카오로부터 사용자 정보 받아오기
+1.  **Client (Android)**: 카카오 SDK를 통해 로그인 성공 시 `Access Token`을 발급받습니다.
+2.  **Request**: Client가 Backend API로 `Access Token`을 헤더(Authorization)에 담아 로그인 요청을 보냅니다.
+3.  **Validation**: Backend는 전달받은 토큰을 사용하여 카카오 User Info API를 호출, 토큰의 유효성을 검증합니다.
+4.  **Response**:
+    * **기존 회원**: 자체 서비스의 **Access Token & Refresh Token (JWT)** 을 발급하여 반환합니다.
+    * **신규 회원**: DB에 사용자 정보(Kakao ID, 닉네임, 프로필 이미지 URL)를 저장(회원가입) 후 JWT를 발급합니다.
+
+### 5.2. AWS S3
+#### 5.2.1. 버킷 생성 및 IAM 설정
+* **S3 버킷 생성**:
+    * **이름**: `s14p11d104-bucket` (전역적으로 고유한 이름 사용)
+    * **리전**: `ap-northeast-2` (아시아 태평양 - 서울)
+    * **퍼블릭 액세스 차단**: 보안을 위해 **"모든 퍼블릭 액세스 차단"** 을 활성화합니다.
+* **IAM 사용자 생성**:
+    * AWS IAM 콘솔에서 `AmazonS3FullAccess` 권한(또는 특정 버킷에 대한 권한)을 가진 사용자를 생성합니다.
+    * 생성 시 발급되는 **Access Key**와 **Secret Key**를 안전하게 보관합니다. (`.env` 파일에 저장 권장)
+
+#### 5.2.2. application.yml 작성
+`software.amazon.awssdk:s3` 라이브러리 활용을 위한 설정입니다.
+
+```yaml
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET_NAME_SECRET}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_SECRET}
+      secret-key: ${AWS_SECRET_KEY_SECRET}
+    region:
+      static: ${AWS_REGION_SECRET}      # 예: ap-northeast-2
+      auto: false
+    stack:
+      auto: false
+```
+
+### 5.3. LiveKit Cloud
+실시간 음성 채팅(Voice Chat) 및 위치 공유 데이터 스트리밍을 위해 자체 호스팅 대신 관리형 서비스인 **LiveKit Cloud**를 사용합니다.
+
+#### 5.3.1. 프로젝트 생성
+* **LiveKit Console 접속**: [https://cloud.livekit.io/](https://cloud.livekit.io/) 에 로그인합니다.
+* **New Project 생성**: 프로젝트 이름(예: `PoliceAndThief_Prd`)을 입력하여 생성합니다.
+
+#### 5.3.2. 키 생성 및 WebSocket URL 확인
+* **API Key 발급**:
+    * `Settings > Keys` 메뉴에서 `Add Standard Key`를 클릭합니다.
+    * **API Key**와 **Secret Key**가 생성됩니다. 이 키는 생성 시점에만 확인 가능하므로 즉시 저장해야 합니다.
+* **WebSocket URL 확인**:
+    * 대시보드 상단에 표시된 `wss://`로 시작하는 URL을 확인합니다. (예: `wss://pnt-project.livekit.cloud`)
+
+#### 5.3.3. application.yml 작성
+```yaml
+livekit:
+  url: ${LIVEKIT_URL}               # wss://...
+  api-key: ${LIVEKIT_API_KEY}       # 발급받은 API Key
+  api-secret: ${LIVEKIT_API_SECRET} # 발급받은 Secret Key
+```
+
+#### 5.3.4. Token 발급 로직
+클라이언트는 직접 LiveKit 서버에 인증하지 않고, **Spring Boot 서버가 발급해 준 Access Token**을 사용하여 Room에 접속합니다.
+
+* **의존성**: `implementation 'io.livekit:livekit-server:0.8.0'`
+* **주요 로직 흐름**:
+    1.  **Client**: 특정 게임 방(Room)에 입장하기 위해 Backend에 요청을 보냅니다.
+    2.  **Server**: `LiveKit URL`, `API Key`, `Secret Key`를 사용하여 JWT 토큰을 생성합니다.
+    3.  **Grant 설정**: 생성할 토큰에 **RoomJoin(방 입장)**, **CanPublish(음성 전송)**, **CanSubscribe(음성 수신)** 권한을 부여합니다.
+    4.  **Return**: 생성된 JWT 토큰을 Client에게 반환합니다.
+    5.  **Connection**: Client는 받은 토큰을 사용하여 LiveKit Cloud WebSocket URL에 연결합니다.

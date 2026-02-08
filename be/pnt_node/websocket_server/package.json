@@ -1,0 +1,41 @@
+{
+  "scripts": {
+    "dev": "babel-node src/app.js"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.28.6",
+    "@babel/node": "^7.28.6",
+    "@babel/preset-env": "^7.28.6",
+    "core-js": "^3.47.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.983.0",
+    "@aws-sdk/s3-request-presigner": "^3.983.0",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "@socket.io/redis-emitter": "^5.1.0",
+    "@turf/turf": "^7.3.2",
+    "amqplib": "^0.10.9",
+    "axios": "^1.13.4",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "hat": "^0.0.3",
+    "ioredis": "^5.9.2",
+    "jsonwebtoken": "^9.0.3",
+    "moment-timezone": "^0.6.0",
+    "mongoose": "^9.1.5",
+    "mongoose-sequence": "^6.0.1",
+    "morgan": "^1.10.1",
+    "pg": "^8.17.2",
+    "pg-hstore": "^2.3.4",
+    "pm2": "^6.0.14",
+    "redis": "^5.10.0",
+    "sequelize": "^6.37.7",
+    "socket.io": "^4.8.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
+  }
+}
