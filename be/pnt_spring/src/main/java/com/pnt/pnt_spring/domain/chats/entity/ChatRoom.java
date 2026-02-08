@@ -85,6 +85,9 @@ public class ChatRoom extends BaseEntity {
 		if (this.currentMembers > 0) {
 			this.currentMembers--;
 		}
+		if (this.currentMembers == 0) {
+			isDeleted = true;
+		}
 	}
 
 	// ===== 권한 체크용 도메인 메서드  =====
