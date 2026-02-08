@@ -1,0 +1,136 @@
+[{
+  "_id": {
+    "$oid": "69888b83d132941bd143ebed"
+  },
+  "memberId": {
+    "$numberLong": "1"
+  },
+  "nickname": "개구리중사래로로",
+  "avatarUrl": "profiles/1/f9126928-deb9-49c6-b7fa-e5cbac3edbe6.jpg",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T13:11:31.379Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T13:12:23.108Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69888c1dd132941bd143ebee"
+  },
+  "memberId": {
+    "$numberLong": "2"
+  },
+  "nickname": "소금크로와상",
+  "avatarUrl": "profiles/2/d3233fb6-b354-4b94-a7f1-658d4ec99275.jpg",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T13:14:05.143Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T13:15:33.815Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69888c7ad132941bd143ebef"
+  },
+  "memberId": {
+    "$numberLong": "3"
+  },
+  "nickname": "JACK",
+  "avatarUrl": "default.png",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T13:15:38.130Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T13:15:38.130Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69888f9fd132941bd143ebf0"
+  },
+  "memberId": {
+    "$numberLong": "4"
+  },
+  "nickname": "은팔찌수집가",
+  "avatarUrl": "profiles/4/d6a11cdf-ec2d-4cb4-8e7a-3226c0c27204.jpeg",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T13:29:03.312Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T13:32:22.356Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69888fa9d132941bd143ebf1"
+  },
+  "memberId": {
+    "$numberLong": "5"
+  },
+  "nickname": "진실의방으로",
+  "avatarUrl": "profiles/5/fa5ea9e7-85c4-4155-8e84-eca700142f33.jpeg",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T13:29:13.281Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T13:32:28.138Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "698893c2d132941bd143ebf2"
+  },
+  "memberId": {
+    "$numberLong": "6"
+  },
+  "nickname": "User_47222",
+  "avatarUrl": "default",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T13:46:42.283Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T13:46:42.283Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6988988bd132941bd143ebf3"
+  },
+  "memberId": {
+    "$numberLong": "7"
+  },
+  "nickname": "타마마",
+  "avatarUrl": "default.png",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T14:07:07.026Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T14:07:07.026Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6988a96dd132941bd143ebf4"
+  },
+  "memberId": {
+    "$numberLong": "8"
+  },
+  "nickname": "나는야라이언",
+  "avatarUrl": "default.png",
+  "isDeleted": false,
+  "createdAt": {
+    "$date": "2026-02-08T15:19:09.545Z"
+  },
+  "updatedAt": {
+    "$date": "2026-02-08T15:19:09.545Z"
+  }
+}]
