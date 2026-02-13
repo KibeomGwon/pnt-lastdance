@@ -651,15 +651,22 @@ export class GameController {
         const gameId = this.socket.data.gameId;
         const memberId = this.socket.data.memberId;
 
+        // 사용자의 게임 캐시 삭제 (참여자마다 필요)
+        await this.redisClient.deleteGameCachesByMemberId(memberId, gameId);
+
+        // 결과 조회와 브로드캐스트는 게임당 한 번이면 충분하다.
+        // 이 핸들러는 참여자 수만큼 호출되므로, 락이 없으면
+        // 같은 결과를 인원수만큼 조회해 룸 전체에 인원수만큼 뿌리게 된다.
+        if (!await this.redisClient.setEndGameAfterLock(gameId)) {
+            return;
+        }
+
         const res = await axios.get(`${process.env.SPRING_BOOT_URL}/games/${gameId}/result`, {
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${await this.redisClient.getAccessToken(memberId)}`
             }
         });
-
-        // 사용자의 게임 캐시 삭제
-        await this.redisClient.deleteGameCachesByMemberId(memberId, gameId);
 
         this.io.to(gameId).emit("get end game after", res.data);
     }

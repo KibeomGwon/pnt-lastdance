@@ -343,6 +343,24 @@ export class RedisClient {
         return await this.pubClient.set(this.getGameTimerLockKeyString(gameId), "locked", "NX", "EX", 5);
     }
 
+    /**
+     * 게임 리셋 락.
+     * 키 만료 이벤트는 구독 중인 모든 프로세스가 받으므로,
+     * 리셋 처리가 프로세스 수만큼 중복 실행되는 것을 막는다.
+     */
+    setGameResetLock = async (gameId) => {
+        return await this.pubClient.set(`room:game:reset:lock:${gameId}`, "locked", "NX", "EX", 60);
+    }
+
+    /**
+     * 게임 결과 조회/브로드캐스트 락.
+     * postGameEndAfter 는 참여자마다 호출되는데, 결과 조회와 브로드캐스트는
+     * 게임당 한 번이면 충분하다. (개인 캐시 삭제는 각자 수행)
+     */
+    setEndGameAfterLock = async (gameId) => {
+        return await this.pubClient.set(`room:game:endafter:lock:${gameId}`, "locked", "NX", "EX", 60);
+    }
+
     deleteGameTimerLock = async (gameId) => {
         await this.pubClient.del(this.getGameTimerLockKeyString(gameId));
     }

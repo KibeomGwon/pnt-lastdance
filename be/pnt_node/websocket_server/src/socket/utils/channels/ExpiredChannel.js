@@ -78,6 +78,12 @@ const expiredChannel = withFunctionLogging("ExpiredChannel", async (message, pub
         const parts = key.split(":");
         const gameId = parseInt(parts[3]);
 
+        // 키 만료 이벤트는 구독 중인 모든 프로세스가 받는다.
+        // 락이 없으면 방 초기화 API 호출과 브로드캐스트가 프로세스 수만큼 중복 실행된다.
+        if (!await redisClient.setGameResetLock(gameId)) {
+            return;
+        }
+
         await redisClient.deleteGameEnd(gameId);
 
         try {
