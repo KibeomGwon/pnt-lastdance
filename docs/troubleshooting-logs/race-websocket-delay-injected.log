@@ -1,0 +1,12 @@
+2026-02-13 23:21:15: 2026-02-13 23:21:15 [info] : [RECV] postGps - MemberId: 2 - Params: { lat: 37.50004, lng: 127.00004, walk: 1, longestSurvived: 1 }
+2026-02-13 23:21:15: 2026-02-13 23:21:15 [info] : [RECV] postArrest - MemberId: 1 - Params: { gameId: 1, policeId: 1, thiefId: 2 }
+2026-02-13 23:21:15: 2026-02-13 23:21:15 [info] : [DONE] postArrest - Duration: 23ms
+2026-02-13 23:21:15: 2026-02-13 23:21:15 [info] : [DONE] postGps - Duration: 223ms
+2026-02-13 23:21:16: 2026-02-13 23:21:16 [info] : [RECV] postArrest - MemberId: 1 - Params: { gameId: 1, policeId: 1, thiefId: 2 }
+2026-02-13 23:21:16: 2026-02-13 23:21:16 [info] : [DONE] postArrest - Duration: 3ms
+2026-02-13 23:21:16: 2026-02-13 23:21:16 [info] : [RECV] postGps - MemberId: 3 - Params: { lat: 37.50004, lng: 127.00004, walk: 1, longestSurvived: 1 }
+2026-02-13 23:21:16: 2026-02-13 23:21:16 [info] : [RECV] postArrest - MemberId: 1 - Params: { gameId: 1, policeId: 1, thiefId: 3 }
+2026-02-13 23:21:16: 2026-02-13 23:21:16 [info] : [DONE] postArrest - Duration: 5ms
+2026-02-13 23:21:16: 2026-02-13 23:21:16 [info] : [DONE] postGps - Duration: 203ms
+2026-02-13 23:21:17: 2026-02-13 23:21:17 [info] : [RECV] postArrest - MemberId: 1 - Params: { gameId: 1, policeId: 1, thiefId: 3 }
+2026-02-13 23:21:17: 2026-02-13 23:21:17 [info] : [DONE] postArrest - Duration: 6ms

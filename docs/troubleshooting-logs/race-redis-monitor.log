@@ -1,0 +1,39 @@
+# Redis MONITOR — A · 메커니즘 테스트 1~2회차 (RACE_PROBE_DELAY_MS=200)
+# 172.19.0.7 = websocket 서버 (GPS·체포 핸들러가 같은 Redis 연결 사용), 192.168.65.1 = 테스트 하네스(상태 확인용 HGET)
+# 명령 인자는 80자에서 잘림. 서버 명령의 주체(GPS/체포)는 명령 순서와 HSET 값(lat)으로 구분.
+
+## trial 1: thief=2  GPS→체포 간격 53ms  확인 시 status=None  재체포=SUCCESS
++    0.0ms  172.19.0.7:49340      hget room:game:1:locations 2
++    0.2ms  172.19.0.7:49340      hget room:game:penalty:1 2
++   52.2ms  172.19.0.7:49340      hget room:game:1:locations 2
++   52.5ms  172.19.0.7:49340      hget room:game:1:locations 1
++   73.0ms  172.19.0.7:49340      hget room:game:1:locations 2
++   73.2ms  172.19.0.7:49340      hset room:game:1:locations 2 {"lat":0,"lng":0,"memberId":2,"gameId":1,"walk":0,"longestSurvived":0,"position"
++   73.6ms  172.19.0.7:49340      hgetall room:game:1:locations
++  202.2ms  172.19.0.7:49340      hset room:game:1:locations 2 {"lat":37.50004,"lng":127.00004,"memberId":2,"gameId":1,"walk":1,"longestSurvive
++  220.1ms  172.19.0.7:49340      hgetall room:game:1:locations
++  676.3ms  192.168.65.1:61659    hget room:game:1:locations 2
++  677.5ms  172.19.0.7:49340      hget room:game:1:locations 2
++  677.9ms  172.19.0.7:49340      hget room:game:1:locations 1
++  680.1ms  172.19.0.7:49340      hget room:game:1:locations 2
++  680.2ms  172.19.0.7:49340      hset room:game:1:locations 2 {"lat":37.50004,"lng":127.00004,"memberId":2,"gameId":1,"walk":1,"longestSurvive
++  680.5ms  172.19.0.7:49340      hgetall room:game:1:locations
++  849.6ms  172.19.0.7:49340      hgetall room:game:1:locations
+
+## trial 2: thief=3  GPS→체포 간격 52ms  확인 시 status=None  재체포=SUCCESS
++    0.0ms  172.19.0.7:49340      hget room:game:1:locations 3
++    0.3ms  172.19.0.7:49340      hget room:game:penalty:1 3
++   50.7ms  172.19.0.7:49340      hget room:game:1:locations 3
++   51.1ms  172.19.0.7:49340      hget room:game:1:locations 1
++   54.0ms  172.19.0.7:49340      hget room:game:1:locations 3
++   54.2ms  172.19.0.7:49340      hset room:game:1:locations 3 {"lat":0,"lng":0,"memberId":3,"gameId":1,"walk":0,"longestSurvived":0,"position"
++   54.6ms  172.19.0.7:49340      hgetall room:game:1:locations
++  201.1ms  172.19.0.7:49340      hset room:game:1:locations 3 {"lat":37.50004,"lng":127.00004,"memberId":3,"gameId":1,"walk":1,"longestSurvive
++  202.3ms  172.19.0.7:49340      hgetall room:game:1:locations
++  657.5ms  192.168.65.1:61659    hget room:game:1:locations 3
++  658.8ms  172.19.0.7:49340      hget room:game:1:locations 3
++  659.1ms  172.19.0.7:49340      hgetall room:game:1:locations
++  659.1ms  172.19.0.7:49340      hget room:game:1:locations 1
++  663.0ms  172.19.0.7:49340      hget room:game:1:locations 3
++  663.5ms  172.19.0.7:49340      hset room:game:1:locations 3 {"lat":37.50004,"lng":127.00004,"memberId":3,"gameId":1,"walk":1,"longestSurvive
++  663.9ms  172.19.0.7:49340      hgetall room:game:1:locations
