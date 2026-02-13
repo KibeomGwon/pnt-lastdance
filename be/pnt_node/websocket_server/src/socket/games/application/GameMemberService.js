@@ -58,14 +58,13 @@ export class GameMemberService {
     }
 
     updateMemberStatus = async (gameId, memberId, status) => {
-        const location = await this.redisClient.getLocation(memberId, gameId);
+        // status 만 바꾼다. 통째로 쓰면 같은 시점의 GPS 갱신을 되돌린다.
+        const location = await this.redisClient.mergeLocation(memberId, gameId, { status });
 
         if (!location) {
             this.makeError("NotFoundException", "유저의 게임 접속 정보를 찾을 수 없습니다.", 404);
         }
 
-        location.status = status;
-        await this.redisClient.setLocation(memberId, gameId, location);
         return location;
     }
 
@@ -125,13 +124,11 @@ export class GameMemberService {
     }
 
     updateInGameConnected = async (gameId, memberId, isConnected) => {
-        const location = await this.redisClient.getLocation(memberId, gameId);
+        const location = await this.redisClient.mergeLocation(memberId, gameId, { isConnected });
+
         if (!location) {
             this.makeError("NotFoundException", "유저의 게임 접속 정보를 찾을 수 없습니다.", 404);
         }
-
-        location.isConnected = isConnected;
-        await this.redisClient.setLocation(memberId, gameId, location);
 
         return true;
     }

@@ -234,20 +234,12 @@ export class GameController {
         const position = gameMember.position;
         const status = gameMember.status;
         const penalty = await this.redisClient.getPenalty(memberId, gameId) || 0;
-        const missionCompleted = gameMember.missionCompleted;
 
         const locationData = {
             lat,
             lng,
-            memberId, // 클라이언트 편의를 위해 포함
-            gameId,
             walk,
             longestSurvived,
-            position,
-            status,
-            penalty,
-            missionCompleted,
-            isConnected: true,
             timestamp: new Date().toISOString() // 중요: 갱신 시간 기록
         };
 
@@ -255,8 +247,10 @@ export class GameController {
             locationData.longestSurvived++;
         }
 
-        // Hash에 저장 (이미 있으면 덮어쓰기됨 -> 자동 최신화)
-        await this.redisClient.setLocation(memberId, gameId, locationData);
+        // status, penalty, missionCompleted, isConnected 는 다른 핸들러가 관리한다.
+        // 통째로 쓰면 그 사이에 일어난 변경(예: 체포)을 덮어쓰므로 자기 필드만 병합한다.
+        const merged = await this.redisClient.mergeLocation(memberId, gameId, locationData);
+        const currentStatus = merged ? merged.status : status;
 
         // 경계선 확인 => turf.js 사용
         const gameSetting = await this.redisClient.getGameSetting(gameId);
@@ -264,7 +258,7 @@ export class GameController {
 
         // 도둑이고, 상태가 PRISON 일때 탈옥 판별
         // 감옥에서 10m 이상 벗어났을때 탈옥 (오차범위 5m) 
-        if (position === GameMemberPosition.THIEF && status === GameMemberStatus.PRISON
+        if (position === GameMemberPosition.THIEF && currentStatus === GameMemberStatus.PRISON
             && !(await this.turfService.checkUserInPrison([lng, lat], [gameSetting.prisonLng, gameSetting.prisonLat]))) {
 
             await this.gameMemberService.updateMemberStatus(gameId, memberId, GameMemberStatus.FREE);
@@ -293,18 +287,16 @@ export class GameController {
             // 만약 3번 이상 벗어나면 자동으로 감옥으로 이송. -> 다음 패널티 체크 활성화까지 10초
             const count = await this.redisClient.increasePenalty(memberId, gameId);
 
-            await this.redisClient.setLocation(memberId, gameId, locationData);
-
             res.penalty = count || penalty;
-            locationData.penalty = res.penalty;
-            await this.redisClient.setLocation(memberId, gameId, locationData);
+            await this.redisClient.mergeLocation(memberId, gameId, { penalty: res.penalty });
 
             if (count >= 3) {
-                locationData.status = GameMemberStatus.TRANSFER;
                 await this.redisClient.deletePenalty(memberId, gameId);
 
-                locationData.penalty = 0;
-                await this.redisClient.setLocation(memberId, gameId, locationData);
+                await this.redisClient.mergeLocation(memberId, gameId, {
+                    status: GameMemberStatus.TRANSFER,
+                    penalty: 0
+                });
 
                 const isGameEnd = await this.gameService.checkGameHaveToFinish(gameId);
 
@@ -327,7 +319,7 @@ export class GameController {
         }
 
         // 이송 중이고, 감옥 범위 안에 들어왔을때
-        if (position === GameMemberPosition.THIEF && status === GameMemberStatus.TRANSFER
+        if (position === GameMemberPosition.THIEF && currentStatus === GameMemberStatus.TRANSFER
             && await this.turfService.checkUserInPrison([lng, lat], [gameSetting.prisonLng, gameSetting.prisonLat])) {
 
             await this.gameMemberService.updateMemberStatus(gameId, memberId, GameMemberStatus.PRISON);

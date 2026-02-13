@@ -9,6 +9,24 @@ export class RedisClient {
         this.GAME_TIMER_PREFIX = "room:game:timer:";
         this.CCTV_TIMER_PREFIX = "room:game:cctv:";
         this.GAME_END_PREFIX = "room:game:end:";
+
+        // 위치 해시는 멤버 정보 전체를 JSON 하나로 보관한다.
+        // 읽고 고쳐서 다시 쓰는 사이에 다른 핸들러의 변경이 끼어들면 덮어써지므로,
+        // 각자 자기 필드만 넘기고 병합은 Redis 안에서 한 번에 처리한다.
+        if (!this.pubClient.mergeLocation) {
+            this.pubClient.defineCommand("mergeLocation", {
+                numberOfKeys: 1,
+                lua: `
+                    local cur = redis.call('HGET', KEYS[1], ARGV[1])
+                    if not cur then return nil end
+                    local obj = cjson.decode(cur)
+                    for k, v in pairs(cjson.decode(ARGV[2])) do obj[k] = v end
+                    local enc = cjson.encode(obj)
+                    redis.call('HSET', KEYS[1], ARGV[1], enc)
+                    return enc
+                `
+            });
+        }
     }
 
     /**
@@ -167,6 +185,17 @@ export class RedisClient {
      */
     setLocation = async (memberId, gameId, location) => {
         await this.pubClient.hset(this.getLocationKeyString(gameId), memberId, JSON.stringify(location));
+    }
+
+    /**
+     * 넘긴 필드만 바꾼다. 읽기-수정-쓰기가 Redis 안에서 한 번에 끝나므로
+     * 그 사이에 다른 핸들러의 변경이 끼어들어 덮어써지지 않는다.
+     */
+    mergeLocation = async (memberId, gameId, patch) => {
+        const res = await this.pubClient.mergeLocation(
+            this.getLocationKeyString(gameId), String(memberId), JSON.stringify(patch)
+        );
+        return res ? JSON.parse(res) : null;
     }
 
     getLocation = async (memberId, gameId) => {

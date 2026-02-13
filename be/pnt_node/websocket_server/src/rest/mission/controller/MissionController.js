@@ -79,7 +79,7 @@ export class MissionController {
                     await this.redisClient.setMission(gameId, memberId, missionId);
 
                     gameMember.missionCompleted = true;
-                    await this.redisClient.setLocation(memberId, gameId, gameMember);
+                    await this.redisClient.mergeLocation(memberId, gameId, { missionCompleted: true });
                     logger.info(`missionCompleted ${JSON.stringify({ gameId, missionId, memberId, success })}`);
                 }
 
